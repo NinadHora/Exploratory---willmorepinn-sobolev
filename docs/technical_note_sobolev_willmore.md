@@ -27,7 +27,17 @@ For reference, the relevant minima:
 
 The paper reaches W = 30.19 at genus 2, well below the naive catenoid sum of two Cliffords (≈39.48), but above Lawson (21.89). The authors note it "has not yet reached" Lawson, "perhaps with more compute this would be achievable."
 
-## 3. Implementation
+## 3. Related work
+
+The idea tested here sits at the intersection of two established lines of work; the contribution, if any, is in connecting them for the Willmore problem, not in either ingredient.
+
+**Natural gradient and metric preconditioning.** Preconditioning a gradient step by the inverse of a problem-adapted metric goes back to Amari's natural gradient (Amari, 1998), where the Fisher information matrix defines a Riemannian geometry on the parameter manifold and the update $g_{\mathrm{nat}} = G^{-1} g$ becomes invariant to reparametrisation and far better conditioned on anisotropic landscapes. The same construction applies with metrics other than Fisher-Rao: Sobolev, Wasserstein, and energy-based geometries each induce a different natural gradient. For physics-informed neural networks specifically, Nurbekyan, Lei and Yang (2022) introduced matrix-free natural gradient descent under Sobolev, Fisher-Rao and Wasserstein metrics, solving the relevant linear system by conjugate gradients with implicit Jacobian-vector products, exactly the matrix-free strategy used here. Müller and Zeinhofer (2023) pushed this further with energy natural gradients, reaching PINN accuracies several orders of magnitude beyond plain Adam. A point made by Nurbekyan et al. is directly relevant to the present setting: the choice of metric in natural gradient descent not only affects the convergence rate quantitatively, but can qualitatively determine which basin of attraction the iterates fall into. That observation is part of what motivated trying a Sobolev step against the genus-2 local minimum, although, as Section 6 reports, the multi-chart gluing obstructed it.
+
+**Sobolev gradients for surface and Willmore flows.** On the geometric side, replacing the $L^2$ inner product by a Sobolev one to regularise a high-order flow is a long-standing idea in geometry processing. Renka and Neuberger (1995) formulated minimal-surface computation directly through a Sobolev inner product; Pinkall and Polthier's (1993) minimal-surface algorithm was later recognised as implicit Sobolev descent. For the Willmore energy itself, whose $L^2$-gradient flow is a stiff fourth-order PDE, Schumacher (2017) studied $H^2$-gradient flows specifically to tame that stiffness, and the same preconditioning philosophy appears in surface fairing and restoration (Eckstein et al. 2007; Crane et al. 2013; Soliman et al. 2021). A recurring lesson in this literature, made explicit in the repulsive-energy work of Yu et al. (2021), is that a Sobolev preconditioner is most effective when its order matches the order of the energy's differential; a mismatch can slow convergence rather than help. This is precisely the regime the Willmore energy occupies, and it is why a surface-metric preconditioner is a natural thing to try.
+
+**Neural geometric flows.** The WillmorePINN paper frames its training as a neural flow and cites Halverson and Ruehle's (2024) theory of metric flows induced by neural-network gradient descent, where the dynamics are governed by a metric neural tangent kernel. The preconditioner explored here can be read as modifying that flow: instead of the $L^2$ flow in parameter space that plain Adam approximates, it targets a Sobolev-type flow of the surface map, closer in spirit to the classical Willmore flow. To my knowledge this specific combination, a Sobolev/natural-gradient preconditioner applied to neural Willmore-energy minimisation, and in particular to the two-chart genus-2 construction, has not been reported; the WillmorePINN codebase uses AdamW throughout. The negative finding at genus 2 (Section 6.4) is therefore at least new information about where this otherwise well-motivated idea breaks down.
+
+## 4. Implementation
 
 ### 3.1 The preconditioner
 
@@ -42,7 +52,7 @@ M (size p×p, with p the number of parameters) is never formed explicitly; M·g_
 
 In the genus-1 experiments the preconditioner descends quickly but does not polish as finely as Adam at the end. The mode used is therefore a hybrid: precondition during the first ~70% of epochs (writing M⁻¹g into the gradient for Adam to consume), then plain Adam. A pure natural-gradient step was also tried and abandoned, since it bypasses the anti-collapse regularity term and degenerates the surface.
 
-## 4. Genus 1: a sanity check
+## 5. Genus 1: a sanity check
 
 Genus 1 is a solved geometric case, so this is only a sanity check that the machinery can recover the known minimiser in a favourable setting. It does: the hybrid reaches W = 20.13 (1.02× the Clifford value), descending smoothly from W ≈ 199 with regularity staying near zero throughout. I read this as confirmation that the single-chart preconditioner is sound, not as a result in itself, since there is nothing to improve on a solved case.
 
@@ -51,7 +61,7 @@ Genus 1 is a solved geometric case, so this is only a sanity check that the mach
 | Adam baseline (paper) | 200 ep | 19.74 | 0.9999× |
 | Hybrid Sobolev + Adam | 600 ep | 20.13 | 1.0197× |
 
-## 5. Genus 2: findings
+## 6. Genus 2: findings
 
 ### 5.1 Reproducing the baseline
 
@@ -85,20 +95,20 @@ My tentative explanation, a hypothesis rather than something proved: the gluing 
 
 What I take from this, cautiously: the Sobolev preconditioner is sound in the single-chart case, but the two-chart construction with gluing introduces a coupling that this block-diagonal scheme does not respect. I do not think this rules out preconditioning at genus 2 in general, only this particular and simplest form of it.
 
-## 6. Relation to the paper's open directions
+## 7. Relation to the paper's open directions
 
 The paper lists several open threads; this exploration touches a few of them and may suggest one connection:
 
-1. On "perhaps with more compute": the warm-restart experiment is at least evidence that, in this setup, more training alone does not escape the basin (Section 5.2).
-2. On "extend training and refine tuning with lower gluing/regularity losses": relevant here, because the gluing is precisely what broke the preconditioner (Section 5.4).
-3. On varying the starting point: a small start was made on the τ sweep (Section 5.3).
+1. On "perhaps with more compute": the warm-restart experiment is at least evidence that, in this setup, more training alone does not escape the basin (Section 6.2).
+2. On "extend training and refine tuning with lower gluing/regularity losses": relevant here, because the gluing is precisely what broke the preconditioner (Section 6.4).
+3. On varying the starting point: a small start was made on the τ sweep (Section 6.3).
 4. On the single connected fundamental domain (the octagon the authors attempted but could not initialise): if the gluing seam is what obstructs preconditioning, then a seamless domain might remove that obstruction. The authors' difficulty there (no analytic initial embedding) and the difficulty here (the seam breaks the preconditioner) look like two sides of the same trade-off: gluable charts are easy to initialise but carry a seam, while a single domain has no seam but is hard to initialise. This is offered as an observation worth keeping in mind, not as a conclusion.
 
 ### Possible next steps
 
 1. Finish the τ sweep (0.9i, 1.1i) to see whether the basin is robust to τ.
 2. Try a preconditioner that respects the coupling, for example keeping the gluing gradient raw while preconditioning the rest, which requires two backward passes.
-3. If the single-domain construction becomes initialisable, test the preconditioner there, where the absence of a seam should remove the obstruction of Section 5.4.
+3. If the single-domain construction becomes initialisable, test the preconditioner there, where the absence of a seam should remove the obstruction of Section 6.4.
 
 ---
 
@@ -108,5 +118,20 @@ The paper lists several open threads; this exploration touches a few of them and
 - **Integration:** a patch to `run.py` (`_train_epoch_genus2`), parametrised by environment variables `NG_SOBOLEV`, `NG_DAMPING`, `NG_CGITERS`.
 - **Hardware:** GPU cluster, L40S and H100 nodes; conda env `ml_env`. Genus 2 runs at ≈ 1.2 s/epoch (L40S), so 2000 epochs take ≈ 40 min.
 - **Current genus-2 anchor:** W = 29.23.
+
+## References
+
+- Amari, S. (1998). Natural gradient works efficiently in learning. *Neural Computation* 10(2), 251-276.
+- Crane, K., Pinkall, U., Schröder, P. (2013). Robust fairing via conformal curvature flow. *ACM TOG* 32(4).
+- Eckstein, I., Pons, J.-P., Tong, Y., Kuo, C.-C., Desbrun, M. (2007). Generalized surface flows for mesh processing. *SGP*.
+- Halverson, J., Ruehle, F. (2024). Metric flows with neural networks. *Mach. Learn.: Sci. Technol.* 5, 045020. arXiv:2310.19870.
+- Hirst, E., Sá Earp, H. N., Silva, T. S. R. (2026). Minimising Willmore energy via neural flow. arXiv:2604.04321.
+- Müller, J., Zeinhofer, M. (2023). Achieving high accuracy with PINNs via energy natural gradient descent. *ICML*. arXiv:2302.13163.
+- Nurbekyan, L., Lei, W., Yang, Y. (2022). Efficient natural gradient descent methods for large-scale PDE-based optimization problems. arXiv:2202.06236.
+- Pinkall, U., Polthier, K. (1993). Computing discrete minimal surfaces and their conjugates. *Experiment. Math.* 2(1).
+- Renka, R. J., Neuberger, J. W. (1995). Minimal surfaces and Sobolev gradients. *SIAM J. Sci. Comput.* 16(6), 1412-1427.
+- Schumacher, H. (2017). On H²-gradient flows for the Willmore energy. arXiv:1703.06469.
+- Soliman, Y., Chern, A., Diamanti, O., Knöppel, F., Pinkall, U., Schröder, P. (2021). Constrained Willmore surfaces. *ACM TOG* 40(4).
+- Yu, C., Schumacher, H., Crane, K. (2021). Repulsive curves. *ACM TOG* 40(2).
 
 *This note records an honest attempt to contribute to an existing effort. The parts that worked are modest; the part that did not is documented so that the next attempt, mine or someone else's, can start from it.*
