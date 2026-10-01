@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+logs/
+slurm/logs/
+*.pt
+*.h5
+results_*/
+.DS_Store

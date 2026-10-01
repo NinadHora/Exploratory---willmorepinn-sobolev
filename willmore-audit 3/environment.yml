@@ -1,0 +1,24 @@
+# Ambiente único para tudo do projeto (harness, fluxo publicado, alternativas, ataques, bacias).
+#   conda env create -f environment.yml
+#   conda activate willmore-audit
+# No RECOD, com GPU: troque a linha do pytorch pela build cuda do cluster se o
+# torch de pip não enxergar a placa (nvidia-smi dentro do nó diz a versão do driver).
+name: willmore-audit
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy>=1.24
+  - scipy>=1.10
+  - matplotlib>=3.7
+  - pyyaml>=6
+  - h5py>=3.8
+  - tqdm
+  - pytest
+  - scikit-learn>=1.3      # clustering e kernel PCA do mapa de bacias (Lectures 7, 8)
+  - pip
+  - pip:
+      - torch>=2.2         # jacfwd/vmap aninhados precisam de torch.func (>=2.0); 2.2+ é mais estável
+      - torchvision
+      - trimesh            # malha e teste de auto-interseção (semana 7)
+      - rtree              # aceleração do trimesh para interseção triângulo-triângulo

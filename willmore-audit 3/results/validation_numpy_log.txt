@@ -1,0 +1,31 @@
+== C0: quadratura e fórmulas nas superfícies exatas
+  [PASS] esfera: W                                          +12.5663706143  (esperado +12.5663706144, erro 5.1e-11)
+  [PASS] esfera r=2.5: W (invariância de escala)            +12.5663706142  (esperado +12.5663706144, erro 1.4e-10)
+  [PASS] esfera: ∫K dA                                      +12.5663706143  (esperado +12.5663706144, erro 5.1e-11)
+  [PASS] elipsoide (1,1,2): ∫K dA                           +12.5663706143  (esperado +12.5663706144, erro 2.3e-11)
+  [PASS] elipsoide (1,1,2): W > 4π                          +15.4516066443  (= 1.2296·4π)
+  [PASS] Clifford: W                                        +19.7392088023  (esperado +19.7392088022, erro 7.2e-11)
+  [PASS] Clifford: ∫K dA                                    -0.0000000000  (esperado +0.0000000000, erro 4.6e-11)
+  [PASS] toro R=3,r=1: W (fórmula fechada)                  +31.4048888987  (esperado +31.4048888984, erro 3.6e-10)
+  [PASS] toro R=3,r=1: ∫K dA                                -0.0000000003  (esperado +0.0000000000, erro 2.7e-10)
+== C2: invariância de Möbius (centro fora da superfície)
+  [PASS] esfera: W(Ψ∘φ) = W(φ)                              +12.5663706150  (esperado +12.5663706143, erro 6.4e-10)
+  [PASS] esfera: ∫K dA preservado                           +12.5663706150  (esperado +12.5663706144, erro 5.9e-10)
+  [PASS] elipsoide: W(Ψ∘φ) = W(φ)                           +15.4516066448  (esperado +15.4516066443, erro 4.6e-10)
+  [PASS] elipsoide: ∫K dA preservado                        +12.5663706149  (esperado +12.5663706144, erro 5.3e-10)
+  [PASS] Clifford: W(Ψ∘φ) = W(φ)                            +19.7392087959  (esperado +19.7392088023, erro 6.4e-09)
+  [PASS] Clifford: ∫K dA preservado                         +0.0000000003  (esperado +0.0000000000, erro 3.3e-10)
+  [PASS] toro R=3: W(Ψ∘φ) = W(φ)                            +31.4048888856  (esperado +31.4048888987, erro 1.3e-08)
+  [PASS] toro R=3: ∫K dA preservado                         +0.0000000006  (esperado +0.0000000000, erro 6.3e-10)
+== C4: resíduo da equação de Willmore (esfera e Clifford são críticos; R=3 não é)
+        esfera     resíduo L2 = 7.587e-07   relativo = 1.000e+00
+        Clifford   resíduo L2 = 2.189e-06   relativo = 1.570e-06
+        toro R=3   resíduo L2 = 2.932e-01   relativo = 8.096e-01
+        (esfera: ΔH=0 e H²=K ⇒ resíduo 0; Clifford: resíduo 0; toro R=3: resíduo O(1))
+== ataque: bolha enxertada no toro de Clifford
+        (bolha no equador externo v=0; grade 192²; ∫K dA ≈ 0 certifica que a grade resolve a bolha)
+        ε=0.10 ρ=0.50:  W_quad=19.8331  ∫K dA=+9.5e-11  W_MC(seed0/1)=19.818/20.112  Huber=19.818/20.112   (Clifford: 19.7392)
+        ε=0.30 ρ=0.50:  W_quad=20.3511  ∫K dA=+1.6e-09  W_MC(seed0/1)=20.473/20.758  Huber=20.473/20.758   (Clifford: 19.7392)
+        ε=0.20 ρ=0.15:  W_quad=22.8163  ∫K dA=-1.1e-04  W_MC(seed0/1)=23.897/22.792  Huber=23.897/22.792   (Clifford: 19.7392)
+
+TUDO OK
